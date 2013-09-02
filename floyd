@@ -1,0 +1,94 @@
+#include<stdio.h>
+#include<stdlib.h>
+#define max 100
+#define maxvertex 20
+#define True 1
+#define False 0
+
+typedef enum{DG,DN,UDG,UDN
+}Graphkind;                                                                     //四种图类型 
+typedef struct{
+    char vexs[maxvertex];                                                       //顶点向量 
+	int arcs[maxvertex][maxvertex];                                             //邻接矩阵 
+	int vexnum,arcnum;	                                                        //图的当前顶点数和弧数 
+	Graphkind kind;
+}MGraph;
+void CreateGraph(MGraph &);                                                     //图的创建函数 
+void ShortestPath_FLOYD(MGraph ,int D[maxvertex][maxvertex],int P[maxvertex][maxvertex][maxvertex]);   //FLOYD算法函数 
+void PrintGraph(int P[maxvertex][maxvertex][maxvertex],MGraph ,int v,int w);    //打印函数 
+
+main()
+{
+	int v,w;                         
+	int D[maxvertex][maxvertex],P[maxvertex][maxvertex][maxvertex];             //二维数组D用来存放两个顶点间的最短距离，三位数组D用来存放两个顶点间中间存在的顶点 
+	MGraph G;
+	CreateGraph(G);                                                             //创建图 
+	ShortestPath_FLOYD(G,D,P);
+	
+	for(v=0;v<=G.vexnum-1;v++)
+	     for(w=0;w<=G.vexnum-1;w++)  
+	          if(D[v][w]<max&&v!=w)
+	          {
+          	        printf("\n%c到%c的最短路径为:\n",65+v,65+w);
+					printf("%c\t",65+v);
+					PrintGraph(P,G,v,w);                                        
+					printf("%c\n",65+w);
+					printf("长度为%d\n",D[v][w]);	
+          	  }                                                                 //打印结果 
+   
+     system("pause");	  
+}
+void CreateGraph(MGraph &G)
+{
+	int i,j;
+	G.kind=DG;                                                                  //定义图的类型：有向图   
+	printf("请输入顶点数和弧数:\n");
+	scanf("%d%d",&G.vexnum,&G.arcnum);                                          //读入图的顶点数和弧数 
+	printf("请输入该图的邻接矩阵(若两点之间无边则用100代替):\n");
+	for(i=0;i<=G.vexnum-1;i++)
+	  for(j=0;j<=G.vexnum-1;j++)
+	    scanf("%d",&G.arcs[i][j]);                                              //读入邻接矩阵 
+}
+void ShortestPath_FLOYD(MGraph G,int D[maxvertex][maxvertex],int P[maxvertex][maxvertex][maxvertex])
+{
+	//用FLOYD算法求有向网G中对各顶点v和w之间的最短路径P[V][W]及其带权长度D[V][W].若P[V][W][U]为ture，则
+	//u是从v到w当前求得的最短路径上的顶点 
+	int v,w,u,i;
+	for(v=0;v<=G.vexnum-1;v++)                                                  //各对顶点间初始已知路径距离 
+         for(w=0;w<=G.vexnum-1;w++)
+	     {
+  		      D[v][w]=G.arcs[v][w];
+  		 
+              for(u=0;u<=G.vexnum-1;u++)
+  		           P[v][w][u]=False;
+  		   
+              if(D[v][w]<max)                                                   //从v到w有直接路径 
+              {
+         	       P[v][w][v]=True;
+         	       P[v][w][w]=True;                                             
+              }//if
+  	     }//for
+  	  
+    for(u=0;u<=G.vexnum-1;u++)
+	     for(v=0;v<=G.vexnum-1;v++)
+              for(w=0;w<=G.vexnum-1;w++)
+	           
+			      if(D[v][u]+D[u][w]<D[v][w])
+	              {
+      		            D[v][w]=D[v][u]+D[u][w];                                //从v经u到w的一条路径更短 
+      		            
+				        for(i=0;i<=G.vexnum-1;i++)
+      		                P[v][w][i]=P[v][u][i]||P[u][w][i];
+      	          }
+}
+void PrintGraph(int P[maxvertex][maxvertex][maxvertex],MGraph G,int v,int w)
+{
+	int u;
+	for(u=0;u<=G.vexnum-1;u++)
+         if(P[v][w][u]==True&&u!=v&&u!=w)                                       //函数跳出递归条件 
+         {
+              PrintGraph(P,G,v,u);                                              //递归调用自己打印从v到u的最短路径 
+			  printf("%c\t",65+u);                                              //打印该顶点 
+			  PrintGraph(P,G,u,w);	                                            //递归调用自己打印从v到u的最短路径
+         }  
+}
